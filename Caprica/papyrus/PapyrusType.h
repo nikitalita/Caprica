@@ -54,6 +54,7 @@ struct PapyrusType final {
     const PapyrusStruct* struc { nullptr };
     const PapyrusObject* obj;
     const PapyrusType* arrayElementType;
+    const PapyrusType* poisonSource;
   } resolved;
 
   PapyrusType() = delete;
@@ -84,9 +85,10 @@ struct PapyrusType final {
   }
 
   static PapyrusType None(CapricaFileLocation loc) { return PapyrusType(Kind::None, loc); }
-  static PapyrusType PoisonedNone(CapricaFileLocation loc, const PapyrusType& poisonSource) {
+  static PapyrusType PoisonedNone(CapricaFileLocation loc, const PapyrusType* poisonSource) {
     auto pt = PapyrusType(Kind::None, loc);
-    pt.poisonState = poisonSource.poisonState;
+    pt.poisonState = poisonSource->poisonState;
+    pt.resolved.poisonSource = poisonSource;
     return pt;
   }
   static PapyrusType Bool(CapricaFileLocation loc) { return PapyrusType(Kind::Bool, loc); }

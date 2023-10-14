@@ -113,6 +113,10 @@ bool PapyrusResolutionContext::canImplicitlyCoerce(CapricaFileLocation loc,
     return true;
 
   if (src.type == PapyrusType::Kind::None) {
+    if (src.poisonState != PapyrusType::PoisonKind::None) {
+      // This gets caught by the call expression poison checker; we don't need to emit a warning here.
+      return canImplicitlyCoerce(loc, *src.resolved.poisonSource, dest);
+    }
     switch (dest.type) {
       case PapyrusType::Kind::Bool:
       case PapyrusType::Kind::ResolvedObject:

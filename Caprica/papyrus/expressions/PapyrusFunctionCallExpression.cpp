@@ -547,7 +547,7 @@ PapyrusType PapyrusFunctionCallExpression::resultType() const {
     }
   } else {
     if (isPoisonedReturn)
-      return PapyrusType::PoisonedNone(location, function.res.func->returnType);
+      return PapyrusType::PoisonedNone(location, &(function.res.func->returnType));
     return function.res.func->returnType;
   }
 }
