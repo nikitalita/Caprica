@@ -14,11 +14,6 @@ pex::PexValue PapyrusCastExpression::generateLoad(pex::PexFile* file, pex::PexFu
     // from a void function call returning ::NoneVar. You are apparently allowed to assign the results
     // of void function calls to objects and bools, so we need to check for that here.
     if (val.type == pex::PexValueType::Invalid) {
-      if (!conf::Skyrim::skyrimAllowAssigningVoidMethodCallResult) {
-        bldr.reportingContext.fatal(location,
-                                    "Cannot cast None method call result to '{}'!",
-                                    targetType);
-      }
       switch (targetType.type) {
         case PapyrusType::Kind::ResolvedObject:
         case PapyrusType::Kind::ResolvedStruct:

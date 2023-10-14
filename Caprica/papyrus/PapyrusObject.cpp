@@ -204,8 +204,7 @@ void PapyrusObject::checkForInheritedIdentifierConflicts(
       auto f = identMap.find(v->name);
       if (f != identMap.end()) {
         // child class variables are allowed to shadow parent properties in Skyrim
-        if (conf::Papyrus::game == GameID::Skyrim && conf::Skyrim::skyrimAllowObjectVariableShadowingParentProperty &&
-            f->second.second == "property") {
+        if (conf::Papyrus::game == GameID::Skyrim && f->second.second == "property") {
           repCtx.warning_W7001_Skyrim_Child_Variable_Shadows_Parent_Property(v->location,
                                                                              v->name,
                                                                              name,

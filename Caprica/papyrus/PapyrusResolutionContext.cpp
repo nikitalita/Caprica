@@ -457,7 +457,7 @@ PapyrusIdentifier PapyrusResolutionContext::tryResolveIdentifier(const PapyrusId
     for (auto stack : localVariableScopeStack) {
       for (auto n : stack->locals) {
         if (idEq(n->name, ident.res.name)) {
-          if (conf::Papyrus::game == GameID::Skyrim && conf::Skyrim::skyrimAllowLocalUseBeforeDeclaration &&
+          if (conf::Papyrus::game == GameID::Skyrim &&
               ident.location.startOffset < n->declareStatement->location.startOffset) {
             reportingContext.warning_W7003_Skyrim_Local_Use_Before_Declaration(ident.location,
                                                                                ident.res.name);
@@ -506,7 +506,7 @@ PapyrusIdentifier PapyrusResolutionContext::tryResolveIdentifier(const PapyrusId
         continue;
       if (rIdent.type == PapyrusIdentifierType::DeclareStatement) {
         // this type of shadowing is allowed by default in skyrim
-        if (conf::Papyrus::game == GameID::Skyrim && conf::Skyrim::skyrimAllowLocalVariableShadowingParentProperty) {
+        if (conf::Papyrus::game == GameID::Skyrim) {
           reportingContext.warning_W7002_Skyrim_Local_Variable_Shadows_Parent_Property(
               rIdent.location,
               ident.res.name,
@@ -526,7 +526,7 @@ PapyrusIdentifier PapyrusResolutionContext::tryResolveIdentifier(const PapyrusId
             ident.res.name,
             getMemberParent(parentIdent)->name);
       } else {
-        if (conf::Papyrus::game == GameID::Skyrim && conf::Skyrim::skyrimAllowObjectVariableShadowingParentProperty) {
+        if (conf::Papyrus::game == GameID::Skyrim) {
           // Warning here already was emitted caught by the object's inheritence checker.
           continue;
         }
