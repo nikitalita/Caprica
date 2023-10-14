@@ -113,8 +113,6 @@ bool PapyrusResolutionContext::canImplicitlyCoerce(CapricaFileLocation loc,
     return true;
 
   if (src.type == PapyrusType::Kind::None) {
-    if (conf::Papyrus::allowImplicitNoneCastsToAnyType)
-      return true;
     switch (dest.type) {
       case PapyrusType::Kind::Bool:
       case PapyrusType::Kind::ResolvedObject:

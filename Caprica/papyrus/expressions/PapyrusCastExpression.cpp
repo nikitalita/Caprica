@@ -32,12 +32,6 @@ pex::PexValue PapyrusCastExpression::generateLoad(pex::PexFile* file, pex::PexFu
           val = bldr.getNoneLocal(location);
           break;
         default:
-          if (conf::Papyrus::allowImplicitNoneCastsToAnyType) {
-            bldr.reportingContext.warning_W7005_Skyrim_Casting_None_Call_Result(location,
-                                                                                targetType.prettyString());
-            val = bldr.getNoneLocal(location);
-            break;
-          }
           bldr.reportingContext.fatal(location,
                                       "Cannot cast None method call result to '{}'!",
                                       targetType);

@@ -58,7 +58,6 @@ GameID game { GameID::UNKNOWN };
   bool allowNegativeLiteralAsBinaryOp{ false };
   bool enableLanguageExtensions{ false };
   bool ignorePropertyNameLocalConflicts{ false };
-  bool allowImplicitNoneCastsToAnyType{ false };
   std::vector<ImportDir> importDirectories {};
   CapricaUserFlagsDefinition userFlagsDefinition{};
 }
