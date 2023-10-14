@@ -62,14 +62,6 @@ GameID game { GameID::UNKNOWN };
   CapricaUserFlagsDefinition userFlagsDefinition{};
 }
 
-namespace Skyrim {
-  bool skyrimAllowUnknownEventsOnNonNativeClass{ true };
-  bool skyrimAllowObjectVariableShadowingParentProperty{ true };
-  bool skyrimAllowLocalVariableShadowingParentProperty{ true };
-  bool skyrimAllowLocalUseBeforeDeclaration{ true };
-  bool skyrimAllowAssigningVoidMethodCallResult{ true };
-}
-
 namespace Performance {
   bool asyncFileRead{ false };
   bool asyncFileWrite{ false };

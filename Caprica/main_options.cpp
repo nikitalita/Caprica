@@ -206,20 +206,20 @@ bool parseCommandLineArguments(int argc, char* argv[], caprica::CapricaJobManage
         "Ensure values returned from BetaOnly and DebugOnly functions don't escape, as that will cause invalid code generation.")
       ("disable-implicit-conversion-from-none", po::bool_switch()->default_value(false),
         "Disable implicit conversion from None in most situations where the use of None likely wasn't the author's intention.")
-      ("skyrim-allow-unknown-events-on-non-native-class", po::value<bool>(&conf::Skyrim::skyrimAllowUnknownEventsOnNonNativeClass)->default_value(false),
-        "Allow unknown events to be defined on non-native classes. This is encountered with some scripts in the base game having Events that are not present on ObjectReference.");
+      ("disable-parameters-shadowing-property", po::bool_switch()->default_value(false),
+        "Disable parameters shadowing properties in the same object or parent object.");
 
-    po::options_description skyrimCompatibilityDesc("Skyrim compatibility (default true with '--game=skyrim')");
+    po::options_description skyrimCompatibilityDesc("Skyrim compatibility (default true with '--game=skyrim', false if another game or strict mode is enabled)");
     skyrimCompatibilityDesc.add_options()
-      ("allow-unknown-events", po::value<bool>(&conf::Skyrim::skyrimAllowUnknownEventsOnNonNativeClass)->default_value(true),
+      ("allow-unknown-events", po::value<bool>()->default_value(true),
         "Allow unknown events to be defined on non-native classes. This is encountered with some scripts in the base game having Events that are not present on ObjectReference.")
-      ("allow-var-shadow-parent", po::value<bool>(&conf::Skyrim::skyrimAllowObjectVariableShadowingParentProperty)->default_value(true),
+      ("allow-var-shadow-parent", po::value<bool>()->default_value(true),
         "Allow Object variable names in derived classes to shadow properties in parent classes.")
-      ("allow-local-shadow-parent", po::value<bool>(&conf::Skyrim::skyrimAllowLocalVariableShadowingParentProperty)->default_value(true),
+      ("allow-local-shadow-parent", po::value<bool>()->default_value(true),
         "Allow local variable names to shadow properties in parent classes.")
-      ("allow-local-use-before-decl", po::value<bool>(&conf::Skyrim::skyrimAllowLocalUseBeforeDeclaration)->default_value(true),
+      ("allow-local-use-before-decl", po::value<bool>()->default_value(true),
         "Allow local variables to be used before they are declared and initialized.")
-      ("allow-assign-void-method-result", po::value<bool>(&conf::Skyrim::skyrimAllowAssigningVoidMethodCallResult)->default_value(true),
+      ("allow-assign-void-method-result", po::value<bool>()->default_value(true),
         "Allow void method call results to be assigned to Objects and Bools.");
 
     po::options_description advancedDesc("Advanced");
@@ -506,15 +506,6 @@ bool parseCommandLineArguments(int argc, char* argv[], caprica::CapricaJobManage
     if (vm.count("pcompiler") && vm.count("noasm"))
       conf::Debug::dumpPexAsm = false;
 
-    if (conf::Papyrus::game != GameID::Skyrim) {
-      // turn off skyrim options
-      conf::Skyrim::skyrimAllowUnknownEventsOnNonNativeClass = false;
-      conf::Skyrim::skyrimAllowObjectVariableShadowingParentProperty = false;
-      conf::Skyrim::skyrimAllowLocalVariableShadowingParentProperty = false;
-      conf::Skyrim::skyrimAllowLocalUseBeforeDeclaration = false;
-      conf::Skyrim::skyrimAllowAssigningVoidMethodCallResult = false;
-    }
-
     // TODO: enable this eventually
     if (conf::CodeGeneration::enableOptimizations && conf::Papyrus::game != GameID::Fallout4) {
       if (!vm["force-enable-optimizations"].as<bool>()) {
@@ -553,13 +544,38 @@ bool parseCommandLineArguments(int argc, char* argv[], caprica::CapricaJobManage
     if (vm["strict"].as<bool>()) {
       for (size_t i = 1000; i < 1010; i++)
         conf::Warnings::warningsToHandleAsErrors.insert(i);
-    } else if (vm["require-all-paths-return"].as<bool>()) {
-      conf::Warnings::warningsToHandleAsErrors.insert(1000);
-    } else if (vm["ensure-betaonly-debugonly-dont-escape"].as<bool>()) {
-      conf::Warnings::warningsToHandleAsErrors.insert(1001);
-      conf::Warnings::warningsToHandleAsErrors.insert(1002);
-    } else if (vm["disable-implicit-conversion-from-none"].as<bool>()) {
-      conf::Warnings::warningsToHandleAsErrors.insert(1003);
+      for (size_t i = 7000; i < 7010; i++)
+        conf::Warnings::warningsToHandleAsErrors.insert(i);
+    } else {
+      if (vm["require-all-paths-return"].as<bool>())
+        conf::Warnings::warningsToHandleAsErrors.insert(1000);
+      if (vm["ensure-betaonly-debugonly-dont-escape"].as<bool>()) {
+        conf::Warnings::warningsToHandleAsErrors.insert(1001);
+        conf::Warnings::warningsToHandleAsErrors.insert(1002);
+      }
+      if (vm["disable-implicit-conversion-from-none"].as<bool>())
+        conf::Warnings::warningsToHandleAsErrors.insert(1003);
+      if (vm["disable-parameters-shadowing-property"].as<bool>()) {
+        conf::Warnings::warningsToHandleAsErrors.insert(1004);
+        conf::Warnings::warningsToHandleAsErrors.insert(1005);
+      }
+      if (conf::Papyrus::game == GameID::Skyrim) {
+        if (!vm["allow-unknown-events"].as<bool>())
+          conf::Warnings::warningsToHandleAsErrors.insert(7000);
+        if (!vm["allow-var-shadow-parent"].as<bool>())
+          conf::Warnings::warningsToHandleAsErrors.insert(7001);
+        if (!vm["allow-local-shadow-parent"].as<bool>())
+          conf::Warnings::warningsToHandleAsErrors.insert(7002);
+        if (!vm["allow-local-use-before-decl"].as<bool>())
+          conf::Warnings::warningsToHandleAsErrors.insert(7003);
+        if (!vm["allow-assign-void-method-result"].as<bool>()) {
+          conf::Warnings::warningsToHandleAsErrors.insert(7004);
+          conf::Warnings::warningsToHandleAsErrors.insert(7005);
+        }
+      } else {
+        for (size_t i = 7000; i < 7010; i++)
+          conf::Warnings::warningsToHandleAsErrors.insert(i);
+      }
     }
 
     if (vm.count("disable-warning")) {

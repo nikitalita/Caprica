@@ -116,20 +116,6 @@ namespace Papyrus {
   extern CapricaUserFlagsDefinition userFlagsDefinition;
 }
 
-// Skyrim-specific settings to emulate the behavior of the Skyrim PCompiler
-namespace Skyrim {
-  // Allows non-inherited events to be declared on non-native classes
-  extern bool skyrimAllowUnknownEventsOnNonNativeClass;
-  // Allows object variables to shadow parent class properties
-  extern bool skyrimAllowObjectVariableShadowingParentProperty;
-  // Allows local variables to shadow parent class properties
-  extern bool skyrimAllowLocalVariableShadowingParentProperty;
-  // Allows local variables to be used before they are declared and initialized
-  extern bool skyrimAllowLocalUseBeforeDeclaration;
-  // Allows void method call results to be assigned to Objects and Bools
-  extern bool skyrimAllowAssigningVoidMethodCallResult;
-}
-
 // Options for tweaking the performance of Caprica.
 namespace Performance {
   // If true, read files asyncronously in an attempt to pre-emptively
