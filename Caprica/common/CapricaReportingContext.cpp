@@ -5,8 +5,7 @@
 #include <iostream>
 
 #include <common/CapricaConfig.h>
-
-#include <Windows.h>
+#include <common/OSUtils.h>
 
 namespace caprica {
 
@@ -18,8 +17,7 @@ void CapricaReportingContext::pushToErrorStream(std::string&& msg, bool isError)
 }
 
 void CapricaReportingContext::breakIfDebugging() {
-  if (IsDebuggerPresent())
-    __debugbreak();
+  debugBreak();
 }
 
 void CapricaReportingContext::exitIfErrors() {

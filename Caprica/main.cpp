@@ -26,9 +26,9 @@
 #include <pex/PexOptimizer.h>
 #include <pex/PexReader.h>
 #include <pex/PexWriter.h>
-
+#ifdef _WIN32
 #include <Windows.h>
-
+#endif
 namespace conf = caprica::conf;
 namespace FSUtils = caprica::FSUtils;
 using caprica::pathEq;
@@ -115,6 +115,29 @@ bool addSingleFile(const IInputFile& input,
                    caprica::CapricaJobManager *jobManager,
                    PapyrusCompilationNode::NodeType nodeType);
 
+inline bool shouldSkip(const std::string_view& ext, PapyrusCompilationNode::NodeType nodeType) {
+  switch (nodeType) {
+    case PapyrusCompilationNode::NodeType::PapyrusCompile:
+    case PapyrusCompilationNode::NodeType::PapyrusImport:
+      if (!pathEq(ext, ".psc"))
+        return true;
+      break;
+    case PapyrusCompilationNode::NodeType::PasReflection:
+    case PapyrusCompilationNode::NodeType::PasCompile:
+      if (!pathEq(ext, ".pas"))
+        return true;
+      break;
+    case PapyrusCompilationNode::NodeType::PexReflection:
+    case PapyrusCompilationNode::NodeType::PexDissassembly:
+      if (!pathEq(ext, ".pex"))
+        return true;
+      break;
+    default:
+      return true;
+  }
+  return false;
+}
+
 bool addFilesFromDirectory(const IInputFile& input,
                            const std::filesystem::path& baseOutputDir,
                            caprica::CapricaJobManager* jobManager,
@@ -149,20 +172,19 @@ bool addFilesFromDirectory(const IInputFile& input,
   const auto DOT = std::string_view(".");
 
   while (dirs.size()) {
-    HANDLE hFind;
-    WIN32_FIND_DATA data;
     auto curDir = dirs.back();
     dirs.pop_back();
     auto curSearchPattern = absBaseDir / curDir / "*";
     caprica::caseless_unordered_identifier_ref_map<PapyrusCompilationNode *> namespaceMap{};
     namespaceMap.reserve(8000);
-
+#ifdef _WIN32
+    HANDLE hFind;
+    WIN32_FIND_DATA data;
     hFind = FindFirstFileA(curSearchPattern.string().c_str(), &data);
     if (hFind == INVALID_HANDLE_VALUE) {
       std::cout << "An error occurred while trying to iterate the files in '" << curSearchPattern << "'!" << std::endl;
       return false;
     }
-
     do {
       std::string_view filenameRef = data.cFileName;
       if (filenameRef != DOT && filenameRef != DOTDOT) {
@@ -171,62 +193,49 @@ bool addFilesFromDirectory(const IInputFile& input,
             dirs.push_back(curDir / data.cFileName);
         } else {
           auto ext = FSUtils::extensionAsRef(filenameRef);
-          bool skip = false;
-
-          switch (nodeType) {
-            case PapyrusCompilationNode::NodeType::PapyrusCompile:
-            case PapyrusCompilationNode::NodeType::PapyrusImport:
-              if (!pathEq(ext, ".psc"))
-                skip = true;
-              break;
-            case PapyrusCompilationNode::NodeType::PasReflection:
-            case PapyrusCompilationNode::NodeType::PasCompile:
-              if (!pathEq(ext, ".pas"))
-                skip = true;
-              break;
-            case PapyrusCompilationNode::NodeType::PexReflection:
-            case PapyrusCompilationNode::NodeType::PexDissassembly:
-              if (!pathEq(ext, ".pex"))
-                skip = true;
-              break;
-            default:
-              skip = true;
-              break;
-          }
-          if (!skip) {
+          if (!shouldSkip(ext, nodeType)) {
             PapyrusCompilationNode* node =
                 getNode(nodeType, jobManager, baseOutputDir, curDir, absBaseDir, data, !input.requiresRemap());
-
             namespaceMap.emplace(caprica::identifier_ref(node->baseName), node);
-            if (!gBaseFound && !baseDirMap.empty()) {
-              // get the filename without the extension using substr assuming that the last 4 characters are the
-              // extension
-              if (baseDirMap.count(node->baseName) != 0)
-                baseDirMap[node->baseName] = true;
-            }
           }
         }
       }
     } while (FindNextFileA(hFind, &data));
     FindClose(hFind);
-
-    if (conf::Papyrus::game > GameID::Skyrim) {
-      if (!namespaceMap.empty()) {
-        // check that all the values in the base script dir map are true
-        if (!gBaseFound && !baseDirMap.empty()) {
-          bool allTrue = true;
-          for (auto& pair : baseDirMap) {
-            if (!pair.second) {
-              allTrue = false;
-              break;
-            }
-          }
-          if (allTrue && namespaceMap.size() >= getBaseLowerFileCountLimit(conf::Papyrus::game)) {
-            // if it's true, then this is the base dir and the namespace should be root
-            gBaseFound = true;
-            l_startNS = "";
+#else
+    // use std::filesystem
+    std::error_code ec;
+    auto it = std::filesystem::directory_iterator(curSearchPattern, ec);
+    if (ec) {
+      std::cout << "An error occurred while trying to iterate the files in '" << curSearchPattern << "'!" << std::endl;
+      return false;
+    }
+    for (const auto& entry : it) {
+      std::string_view filenameRef = entry.path().filename().string();
+      if (filenameRef != DOT && filenameRef != DOTDOT) {
+        if (entry.is_directory()) {
+          if (recursive)
+            dirs.push_back(curDir / filenameRef);
+        } else {
+          auto ext = FSUtils::extensionAsRef(filenameRef);
+          if (!shouldSkip(ext, nodeType)) {
+            PapyrusCompilationNode* node = getNode(nodeType,
+                                                   jobManager,
+                                                   baseOutputDir,
+                                                   curDir,
+                                                   absBaseDir,
+                                                   entry.path(),
+                                                   entry.last_write_time().time_since_epoch().count(),
+                                                   entry.file_size(),
+                                                   !input.requiresRemap());
+            namespaceMap.emplace(caprica::identifier_ref(node->baseName), node);
           }
         }
+      }
+    }
+#endif
+    if (conf::Papyrus::game > GameID::Skyrim) {
+      if (!namespaceMap.empty()) {
         auto curDirNS = FSUtils::pathToObjectName(curDir);
         auto namespaceName = l_startNS.empty() ? curDirNS : (l_startNS + ":" + curDirNS);
         caprica::papyrus::PapyrusCompilationContext::pushNamespaceFullContents(namespaceName, std::move(namespaceMap));
