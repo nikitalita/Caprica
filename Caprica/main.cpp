@@ -36,55 +36,6 @@ using caprica::papyrus::PapyrusCompilationNode;
 
 namespace caprica {
 bool parseCommandLineArguments(int argc, char *argv[], caprica::CapricaJobManager *jobManager);
-
-// A hack to speed up identifying the base game script directory
-// Each of these are in the 
-static caseless_unordered_identifier_ref_set starfieldBaseScriptDirSet = {
-        "scriptobject",
-        "form",
-        "spellapplycameraattachedfxscript",
-        "addfactiontolinkedrefontrigger"
-};
-
-static bool gBaseFound = true;
-
-static caseless_unordered_identifier_ref_set fallout4BaseScriptDirSet = {
-        "scriptobject",
-        "form",
-        "viciousdogfxscript"
-};
-
-// lower bound of the number of files in the root of the base script dir
-constexpr size_t getBaseLowerFileCountLimit(GameID game) {
-  switch (game) {
-    case GameID::Fallout4:
-      return 900;
-    case GameID::Starfield:
-      return 1400;
-    default:
-      return 0;
-  }
-}
-
-caseless_unordered_identifier_ref_map<bool> getBaseSigMap(GameID game) {
-  caseless_unordered_identifier_ref_map<bool> map{};
-  switch(game){
-    case GameID::Fallout4:
-      map.reserve(fallout4BaseScriptDirSet.size());
-      for (auto &id: fallout4BaseScriptDirSet)
-        map.emplace(id, false);
-      break;
-    case GameID::Starfield:
-      map.reserve(starfieldBaseScriptDirSet.size());
-      for (auto &id: starfieldBaseScriptDirSet)
-        map.emplace(id, false);
-      break;
-    default:
-      break;
-  }
-  return map;
-}
-
 static const std::unordered_set FAKE_SKYRIM_SCRIPTS_SET = {
         "fake://skyrim/__ScriptObject.psc",
         "fake://skyrim/DLC1SCWispWallScript.psc",
@@ -161,7 +112,6 @@ bool addFilesFromDirectory(const IInputFile& input,
   bool recursive = input.isRecursive();
   std::vector<std::filesystem::path> dirs {};
   dirs.push_back(subdir);
-  auto baseDirMap = getBaseSigMap(conf::Papyrus::game);
   auto l_startNS = startingNS;
   if (l_startNS.empty()) {
     if (conf::Papyrus::game > GameID::Skyrim) {
@@ -248,7 +198,6 @@ bool addFilesFromDirectory(const IInputFile& input,
       caprica::papyrus::PapyrusCompilationContext::pushNamespaceFullContents("", std::move(namespaceMap));
     }
     // We don't repopulate it because it's either in the root of whatever was imported or it's not in this import at all
-    baseDirMap.clear();
   }
   return true;
 }
