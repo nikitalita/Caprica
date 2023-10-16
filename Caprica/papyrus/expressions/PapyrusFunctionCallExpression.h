@@ -28,10 +28,12 @@ struct PapyrusFunctionCallExpression final : public PapyrusExpression {
     template <typename T>
     friend struct IntrusiveLinkedList;
     template <typename> friend struct IntrusiveLinkedList;
+    // clang will bitch about this line endlessly and says it is useless, but it fails to compile without it.
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wunsupported-friend"
+#endif
     template <typename T>
-    template <typename T2>
     friend struct IntrusiveLinkedList<T>::LockstepIterator;
-
     Parameter* next { nullptr };
   };
   PapyrusIdentifier function;
