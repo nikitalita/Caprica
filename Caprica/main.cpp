@@ -228,20 +228,11 @@ bool addFilesFromDirectory(const IInputFile& input,
                                                    curDir,
                                                    absBaseDir,
                                                    entry.path(),
-                                                   entry.last_write_time().time_since_epoch().count(),
+                                                   duration_cast<std::chrono::seconds>(
+                                                           entry.last_write_time().time_since_epoch()).count(),
                                                    entry.file_size(),
                                                    !input.requiresRemap());
-            auto name = caprica::identifier_ref(node->baseName);
-            auto thing = namespaceMap.emplace(name, node);
-
-            auto size = namespaceMap.size();
-            std::cout << "SIZE IS " << size << std::endl;
-            auto thing2 = namespaceMap.find(name);
-            if (thing2 == namespaceMap.end())
-              std::cout << "NOT FOUND" << std::endl;
-            else
-              std::cout << "FOUND" << std::endl;
-            int i = 0;
+            namespaceMap.emplace(caprica::identifier_ref(node->baseName), node);
           }
         }
       }
