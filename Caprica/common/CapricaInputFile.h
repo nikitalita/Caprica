@@ -15,7 +15,10 @@ struct IInputFile {
   bool exists() const;
   bool requiresRemap() const { return requiresPreParse; }
   virtual bool resolve() = 0;
-  IInputFile(const std::filesystem::path& _path, bool noRecurse = true, const std::filesystem::path& _cwd = "");
+  IInputFile(const std::filesystem::path& _path,
+             bool noRecurse = true,
+             const std::filesystem::path& _cwd = "",
+             bool isFolder = false);
   virtual ~IInputFile() = default;
 
 protected:

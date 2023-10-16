@@ -57,10 +57,14 @@ bool IInputFile::dirContains(const std::filesystem::path& path, const std::files
   return false;
 }
 
-IInputFile::IInputFile(const std::filesystem::path& _path, bool noRecurse, const std::filesystem::path& _cwd)
+IInputFile::IInputFile(const std::filesystem::path& _path,
+                       bool noRecurse,
+                       const std::filesystem::path& _cwd,
+                       bool isFolder)
     : noRecurse(noRecurse),
       rawPath(std::move(_path)),
-      cwd(_cwd.empty() ? std::filesystem::current_path() : std::move(FSUtils::canonicalFS(_cwd))) {
+      cwd(_cwd.empty() ? std::filesystem::current_path() : std::move(FSUtils::canonicalFS(_cwd))),
+      isFolder(isFolder) {
 }
 
 bool IInputFile::exists() const {
@@ -84,7 +88,7 @@ std::filesystem::path getCorrectBaseDir(const std::filesystem::path& normalPath,
 }
 
 InputFile::InputFile(const std::filesystem::path& _path, bool noRecurse, const std::filesystem::path& _cwd)
-    : IInputFile(_path, noRecurse, _cwd) {
+    : IInputFile(_path, noRecurse, _cwd, false) {
   requiresPreParse = true; // we always require pre-parse for non-PCompiler-compatible input files
 }
 
@@ -115,10 +119,9 @@ bool InputFile::resolve() {
 }
 
 ImportDir::ImportDir(const std::filesystem::path& _path, bool noRecurse, const std::filesystem::path& _cwd)
-    : IInputFile(_path, noRecurse, _cwd) {
+    : IInputFile(_path, noRecurse, _cwd, true) {
   requiresPreParse = true; // we always require pre-parse for import dirs
   import = true;
-  isFolder = true;
   resolve(); // we resolve import dirs immediately
 }
 
@@ -139,8 +142,7 @@ PCompInputFile::PCompInputFile(const std::filesystem::path& _path,
                                bool noRecurse,
                                bool isFolder,
                                const std::filesystem::path& _cwd)
-    : IInputFile(_path, noRecurse, _cwd) {
-  isFolder = isFolder;
+    : IInputFile(_path, noRecurse, _cwd, isFolder) {
 }
 
 bool PCompInputFile::resolve() {
