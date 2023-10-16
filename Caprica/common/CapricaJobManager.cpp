@@ -116,9 +116,7 @@ StartOver:
       waiterCount.load(std::memory_order_consume) == workerCount - 1) {
     stopWorkers.store(true, std::memory_order_release);
     workerCount--;
-    while (waiterCount.load(std::memory_order_consume) != 0) {
-      queueCondition.notify_one();
-    }
+    queueCondition.notify_all();
     return;
   }
 
