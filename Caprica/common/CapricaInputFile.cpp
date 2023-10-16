@@ -57,12 +57,22 @@ bool IInputFile::dirContains(const std::filesystem::path& path, const std::files
   return false;
 }
 
+std::filesystem::path _normal(const std::filesystem::path& _path){
+#ifdef _WIN32
+  return _path;
+#else
+  auto path = _path.string();
+  std::replace(path.begin(), path.end(), '\\', FSUtils::SEP);
+  return path;
+#endif
+}
+
 IInputFile::IInputFile(const std::filesystem::path& _path,
                        bool noRecurse,
                        const std::filesystem::path& _cwd,
                        bool isFolder)
     : noRecurse(noRecurse),
-      rawPath(std::move(_path)),
+      rawPath(std::move(_normal(_path))),
       cwd(_cwd.empty() ? std::filesystem::current_path() : std::move(FSUtils::canonicalFS(_cwd))),
       isFolder(isFolder) {
 }
