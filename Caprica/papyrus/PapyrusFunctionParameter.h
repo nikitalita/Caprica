@@ -41,14 +41,18 @@ struct PapyrusFunctionParameter final {
     type = ctx->resolveType(type, true);
     defaultValue = ctx->coerceDefaultValue(defaultValue, type);
   }
-
 private:
-  friend IntrusiveLinkedList<PapyrusFunctionParameter>;
-  template <typename T>
-  friend struct IntrusiveLinkedList;
-  template <typename T>
-  template <typename T2>
-  friend struct IntrusiveLinkedList<T>::LockstepIterator;
+  template <typename> friend struct IntrusiveLinkedList;
+  template <>
+  friend struct IntrusiveLinkedList<PapyrusFunctionParameter>::LockstepIterator;
+  template <>
+  friend struct IntrusiveLinkedList<PapyrusFunctionParameter>::LockstepIteratorWrapper;
+  // clang will bitch about this line endlessly and says it is useless, but it fails to compile without it.
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wunsupported-friend"
+#endif
+  template <typename T, typename T2> friend struct IntrusiveLinkedList<T>::LockstepIteratorWrapper;
+
   PapyrusFunctionParameter* next { nullptr };
 };
 

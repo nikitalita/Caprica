@@ -1,7 +1,6 @@
 #include <common/CaselessStringComparer.h>
 
-#include <intrin.h>
-
+#include <common/AsmUtils.h>
 namespace caprica {
 
 alignas(128) const uint64_t charToLowerMap[] = { ' ', '!', '"', '#', '$',  '%', '&', '\'', '(', ')', '*', '+', ',', '-',
@@ -57,8 +56,9 @@ bool pathEq(const identifier_ref& a, const identifier_ref& b) {
   return caselessEq(std::string_view(a.data(), a.size()), std::string_view(b.data(), b.size()));
 }
 
-alignas(128) static const __m128i spaces { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+alignas(128) static constexpr char _spaces[]{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                                            ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+alignas(128) static const __m128i spaces = reinterpret_cast<const __m128i &>(_spaces);
 
 template <bool isNullTerminated>
 ALWAYS_INLINE bool CaselessIdentifierEqual::equal(const char* a, const char* b, size_t len) {

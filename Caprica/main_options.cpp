@@ -14,6 +14,8 @@
 #include <papyrus/PapyrusCompilationContext.h>
 #include <string>
 #include <utility>
+#include <common/OSUtils.h>
+
 namespace conf = caprica::conf;
 namespace po = boost::program_options;
 namespace filesystem = std::filesystem;
@@ -313,7 +315,7 @@ bool parseCommandLineArguments(int argc, char* argv[], caprica::CapricaJobManage
     po::variables_map vm;
     // scan argv for `-pcompiler`
     for (int i = 1; i < argc; i++) {
-      if (_stricmp(argv[i], "--pcompiler") == 0 || _stricmp(argv[i], "-pcompiler") == 0) {
+      if (caselessCompare(argv[i], "--pcompiler") == 0 || caselessCompare(argv[i], "-pcompiler") == 0) {
         default_style = pcompiler_style;
         break;
       }

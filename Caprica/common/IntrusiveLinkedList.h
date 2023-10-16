@@ -2,7 +2,6 @@
 #include <stdexcept>
 
 namespace caprica {
-
 template <typename T>
 struct IntrusiveLinkedList final {
   IntrusiveLinkedList() = default;
@@ -111,10 +110,11 @@ private:
     Iterator(T* mFront) : cur(mFront) { }
   };
 
+private:
   template <typename T2>
-  friend struct ConstLockstepIteratorWrapper;
+  struct LockstepIteratorWrapper;
   template <typename T2>
-  friend struct LockstepIteratorWrapper;
+  struct ConstLockstepIteratorWrapper;
 
 public:
   template <typename T2>
@@ -150,8 +150,8 @@ public:
     }
 
   private:
-    friend LockstepIteratorWrapper<T2>;
-    friend ConstLockstepIteratorWrapper<T2>;
+    friend struct LockstepIteratorWrapper<T2>;
+    friend struct ConstLockstepIteratorWrapper<T2>;
     struct {
       T* self { nullptr };
       T2* other { nullptr };

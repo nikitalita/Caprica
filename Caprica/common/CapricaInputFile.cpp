@@ -1,6 +1,6 @@
-#include "CapricaInputFile.h"
-#include <common/CapricaConfig.h>
 #include <common/CapricaInputFile.h>
+
+#include <common/CapricaConfig.h>
 #include <common/FSUtils.h>
 #include <common/parser/PapyrusProject.h>
 #include <filesystem>

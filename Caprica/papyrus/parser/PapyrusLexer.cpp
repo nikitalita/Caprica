@@ -10,7 +10,7 @@
 #include <common/CaselessStringComparer.h>
 #include <common/LargelyBufferedString.h>
 
-#include <nmmintrin.h>
+#include <common/AsmUtils.h>
 
 namespace caprica { namespace papyrus { namespace parser {
 
@@ -475,9 +475,8 @@ StartOver:
         getChar();
       }
 
-      static const __m128i identifierChars = {
-        'a', 'z', 'A', 'Z', '0', '9', '_', '_', ':', ':', '\0',
-      };
+      static constexpr char _identifierChars[16] = "azAZ09__::";
+      static const __m128i identifierChars = reinterpret_cast<const __m128i &>(_identifierChars);
 
       int idx = 0;
       do {

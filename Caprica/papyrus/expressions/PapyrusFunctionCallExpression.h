@@ -24,11 +24,16 @@ struct PapyrusFunctionCallExpression final : public PapyrusExpression {
     ~Parameter() = default;
 
   private:
+
     template <typename T>
     friend struct IntrusiveLinkedList;
+    template <typename> friend struct IntrusiveLinkedList;
     template <typename T>
     template <typename T2>
     friend struct IntrusiveLinkedList<T>::LockstepIterator;
+    template <typename T>
+    friend struct IntrusiveLinkedList<T>::ConstIterator;
+
     Parameter* next { nullptr };
   };
   PapyrusIdentifier function;

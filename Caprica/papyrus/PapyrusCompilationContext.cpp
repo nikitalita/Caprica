@@ -2,7 +2,8 @@
 
 #include <fcntl.h>
 #include <filesystem>
-#include <io.h>
+
+#include <common/OSUtils.h>
 #include <iostream>
 
 #include <common/allocators/AtomicChainedPool.h>
@@ -82,23 +83,23 @@ void PapyrusCompilationNode::FileReadJob::run() {
   }
   if (parent->filesize < std::numeric_limits<uint32_t>::max()) {
     auto buf = readAllocator.allocate(parent->filesize + 1);
-    auto fd = _open(parent->sourceFilePath.c_str(), _O_BINARY | _O_RDONLY | _O_SEQUENTIAL);
+    auto fd = openFile(parent->sourceFilePath.c_str(), O_RDONLY, 0);
     if (fd != -1) {
-      auto len = _read(fd, (void*)buf, (uint32_t)parent->filesize);
+      auto len = readFile(fd, (void *) buf, (uint32_t) parent->filesize);
       parent->readFileData = std::string_view(buf, len);
-      if (_eof(fd) == 1) {
-        _close(fd);
+      if (isEOF(fd, buf, len) == 1) {
+        closeFile(fd);
         // Need this to be null terminated.
         buf[parent->filesize] = '\0';
         return;
       }
-      _close(fd);
+      closeFile(fd);
     }
   }
   {
     std::string str;
     str.resize(parent->filesize);
-    std::ifstream inFile { parent->sourceFilePath, std::ifstream::binary };
+    std::ifstream inFile{parent->sourceFilePath, std::ifstream::binary};
     inFile.exceptions(std::ifstream::badbit | std::ifstream::failbit);
     if (parent->filesize != 0)
       inFile.read((char*)str.data(), parent->filesize);
@@ -126,7 +127,7 @@ std::string_view findScriptName(const std::string_view& data, const std::string_
       next = data.size() - 1;
     auto line = data.substr(last, next - last);
     auto begin = line.find_first_not_of(" \t");
-    if (strnicmp(line.substr(begin, startstring.size()).data(), startstring.data(), startstring.size()) == 0) {
+    if (caselessCompare(line.substr(begin, startstring.size()).data(), startstring.data(), startstring.size()) == 0) {
       auto first = line.find_first_not_of(" \t", startstring.size() + begin);
       return line.substr(first, line.find_first_of(" \t", first) - first);
     }
@@ -169,7 +170,7 @@ void PapyrusCompilationNode::FileParseJob::run() {
     case NodeType::PasCompile: {
       // check the object name with the reportedname
       auto nsName = FSUtils::pathToObjectName(parent->reportedName);
-      if (_strnicmp(parent->objectName.c_str(), nsName.c_str(), parent->objectName.size()) != 0) {
+      if (caselessCompare(parent->objectName.c_str(), nsName.c_str(), parent->objectName.size()) != 0) {
         if (parent->strictNS) {
           CapricaReportingContext::logicalFatal(
               "{}: The script namespace '{}' does not match the expected namespace '{}'.\n"
@@ -411,7 +412,7 @@ struct PapyrusNamespace final {
                        caseless_unordered_identifier_ref_map<PapyrusCompilationNode*>&& map) {
     if (conf::Papyrus::game == GameID::Skyrim && curPiece != "")
       CapricaReportingContext::logicalFatal("Invalid namespacing on Skyrim script: {}", curPiece);
-    if (curPiece == "") {
+    if (curPiece.empty()) {
       if (!objects.empty()) {
         // we have to merge them
         for (auto& obj : map) {
@@ -542,7 +543,14 @@ struct PapyrusNamespace final {
 static PapyrusNamespace rootNamespace {};
 void PapyrusCompilationContext::pushNamespaceFullContents(
     const std::string& namespaceName, caseless_unordered_identifier_ref_map<PapyrusCompilationNode*>&& map) {
+  std::string scriptObjectns = namespaceName + ":ScriptObject";
+  identifier_ref scriptObject = "ScriptObject";
+  auto thing = map.find(scriptObject);
   rootNamespace.createNamespace(namespaceName, std::move(map));
+  identifier_ref dsgas;
+  PapyrusCompilationNode *node;
+  auto thing2 = rootNamespace.tryFindType(scriptObjectns, &node, &dsgas);
+  std::cout << "Did we find this?" << (thing2 ? "yes" : "no") << "\n";
 }
 
 void PapyrusCompilationContext::awaitRead() {
@@ -577,6 +585,8 @@ static void renameMap(const PapyrusNamespace* child, TempRenameMap& tempRenameMa
 void PapyrusCompilationContext::RenameImports(CapricaJobManager* jobManager) {
   if (conf::General::compileInParallel)
     jobManager->startup((uint32_t)std::thread::hardware_concurrency());
+  identifier_ref scriptObject = "scriptObject";
+  identifier_ref refas = "RefCollectionAlias";
 
   for (auto& child : rootNamespace.children) {
     // If this is a child beginning with `!`, this is a temporary import namespace

@@ -85,7 +85,8 @@ pex::PexValue PapyrusIdentifier::generateLoad(pex::PexFile* file,
     }
     case PapyrusIdentifierType::BuiltinStateField:
       return pex::PexValue::Identifier(file->getString("::State"));
-
+    case PapyrusIdentifierType::Guard:
+      return pex::PexValue::Identifier(file->getString(res.guard->name));
     case PapyrusIdentifierType::Function:
     case PapyrusIdentifierType::BuiltinArrayFunction:
       CapricaReportingContext::logicalFatal("Invalid PapyrusIdentifierType!");
@@ -129,7 +130,7 @@ void PapyrusIdentifier::generateStore(pex::PexFile* file,
     case PapyrusIdentifierType::BuiltinStateField:
       bldr << op::assign { pex::PexValue::Identifier(file->getString("::State")), val };
       return;
-
+    case PapyrusIdentifierType::Guard:
     case PapyrusIdentifierType::Function:
     case PapyrusIdentifierType::BuiltinArrayFunction:
       CapricaReportingContext::logicalFatal("Invalid PapyrusIdentifierType!");
@@ -200,6 +201,7 @@ void PapyrusIdentifier::ensureAssignable(CapricaReportingContext& repCtx) const 
     case PapyrusIdentifierType::Unresolved:
       return;
 
+    case PapyrusIdentifierType::Guard:
     case PapyrusIdentifierType::Function:
     case PapyrusIdentifierType::BuiltinArrayFunction:
       CapricaReportingContext::logicalFatal("Invalid PapyrusIdentifierType!");
@@ -213,6 +215,7 @@ void PapyrusIdentifier::markRead() {
       const_cast<PapyrusVariable*>(res.var)->referenceState.isRead = true;
       return;
 
+    case PapyrusIdentifierType::Guard:
     case PapyrusIdentifierType::Property:
     case PapyrusIdentifierType::Parameter:
     case PapyrusIdentifierType::DeclareStatement:
@@ -242,6 +245,7 @@ void PapyrusIdentifier::markWritten() {
     case PapyrusIdentifierType::DeclareStatement:
     case PapyrusIdentifierType::StructMember:
     case PapyrusIdentifierType::BuiltinStateField:
+    case PapyrusIdentifierType::Guard:
       return;
 
     // This being unresolved has already been reported,
@@ -276,6 +280,7 @@ PapyrusType PapyrusIdentifier::resultType() const {
     case PapyrusIdentifierType::Unresolved:
       return PapyrusType::None(location);
 
+    case PapyrusIdentifierType::Guard: // this should never be used as a result type.
     case PapyrusIdentifierType::Function:
     case PapyrusIdentifierType::BuiltinArrayFunction:
       CapricaReportingContext::logicalFatal("Invalid PapyrusIdentifierType!");

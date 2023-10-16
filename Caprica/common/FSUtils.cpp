@@ -1,7 +1,12 @@
 #include <common/FSUtils.h>
 
 #include <fcntl.h>
+
+#ifdef __APPLE__
+#include <sys/uio.h>
+#else
 #include <io.h>
+#endif
 
 #include <cstring>
 #include <filesystem>

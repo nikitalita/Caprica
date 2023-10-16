@@ -1,7 +1,7 @@
 #include <common/allocators/ReffyStringPool.h>
+#include <common/sse2neon.h>
 
 #include <assert.h>
-#include <intrin.h>
 
 namespace caprica { namespace allocators {
 

@@ -30,7 +30,7 @@ NEVER_INLINE
 bool idEq(const std::string& a, const std::string& b);
 NEVER_INLINE
 bool idEq(std::string_view a, std::string_view b);
-ALWAYS_INLINE
+inline
 bool idEq(const identifier_ref& a, const identifier_ref& b) {
   return a.identifierEquals(b);
 }

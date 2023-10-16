@@ -68,7 +68,10 @@ if (CAPRICA_USE_STATIC_RUNTIME)
   endif()
 endif()
 
-
+#check if we're not running MSVC
+if(NOT MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdeclspec -fms-extensions")
+endif()
 
 
 set(CAPRICA_TARGET_NAME                ${PROJECT_NAME})

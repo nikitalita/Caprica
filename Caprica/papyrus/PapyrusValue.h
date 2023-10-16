@@ -21,7 +21,7 @@ enum class PapyrusValueType {
   Float,
   Bool,
 };
-
+struct PapyrusResolutionContext;
 struct PapyrusValue final {
   PapyrusValueType type { PapyrusValueType::None };
   CapricaFileLocation location;

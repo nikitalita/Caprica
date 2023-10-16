@@ -92,6 +92,7 @@ static const std::unordered_set FAKE_SKYRIM_SCRIPTS_SET = {
 
 bool handleImports(const std::vector<ImportDir>& f, caprica::CapricaJobManager* jobManager);
 
+#ifdef _WIN32
 PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType,
                                 CapricaJobManager* jobManager,
                                 const std::filesystem::path& baseOutputDir,
@@ -99,7 +100,7 @@ PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType
                                 const std::filesystem::path& absBaseDir,
                                 const WIN32_FIND_DATA& data,
                                 bool strictNS);
-
+#endif
 PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType,
                                 CapricaJobManager* jobManager,
                                 const std::filesystem::path& baseOutputDir,
@@ -174,10 +175,10 @@ bool addFilesFromDirectory(const IInputFile& input,
   while (dirs.size()) {
     auto curDir = dirs.back();
     dirs.pop_back();
-    auto curSearchPattern = absBaseDir / curDir / "*";
     caprica::caseless_unordered_identifier_ref_map<PapyrusCompilationNode *> namespaceMap{};
     namespaceMap.reserve(8000);
 #ifdef _WIN32
+    auto curSearchPattern = absBaseDir / curDir / "*";
     HANDLE hFind;
     WIN32_FIND_DATA data;
     hFind = FindFirstFileA(curSearchPattern.string().c_str(), &data);
@@ -203,6 +204,7 @@ bool addFilesFromDirectory(const IInputFile& input,
     } while (FindNextFileA(hFind, &data));
     FindClose(hFind);
 #else
+    auto curSearchPattern = absBaseDir / curDir;
     // use std::filesystem
     std::error_code ec;
     auto it = std::filesystem::directory_iterator(curSearchPattern, ec);
@@ -211,7 +213,8 @@ bool addFilesFromDirectory(const IInputFile& input,
       return false;
     }
     for (const auto& entry : it) {
-      std::string_view filenameRef = entry.path().filename().string();
+      std::string filename = entry.path().filename().string();
+      std::string_view filenameRef = filename;
       if (filenameRef != DOT && filenameRef != DOTDOT) {
         if (entry.is_directory()) {
           if (recursive)
@@ -228,7 +231,17 @@ bool addFilesFromDirectory(const IInputFile& input,
                                                    entry.last_write_time().time_since_epoch().count(),
                                                    entry.file_size(),
                                                    !input.requiresRemap());
-            namespaceMap.emplace(caprica::identifier_ref(node->baseName), node);
+            auto name = caprica::identifier_ref(node->baseName);
+            auto thing = namespaceMap.emplace(name, node);
+
+            auto size = namespaceMap.size();
+            std::cout << "SIZE IS " << size << std::endl;
+            auto thing2 = namespaceMap.find(name);
+            if (thing2 == namespaceMap.end())
+              std::cout << "NOT FOUND" << std::endl;
+            else
+              std::cout << "FOUND" << std::endl;
+            int i = 0;
           }
         }
       }
@@ -284,6 +297,7 @@ PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType
   return node;
 }
 
+#ifdef _WIN32
 PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType,
                                 CapricaJobManager* jobManager,
                                 const std::filesystem::path& baseOutputDir,
@@ -313,6 +327,7 @@ PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType
                  fileSize,
                  strictNS);
 }
+#endif
 
 bool handleImports(const std::vector<ImportDir>& f, caprica::CapricaJobManager* jobManager) {
   // Skyrim hacks; we need to import Skyrim's fake scripts into the global namespace first.

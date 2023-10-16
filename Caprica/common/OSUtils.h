@@ -1,51 +1,26 @@
 #pragma once
 
 #include <string>
-#ifdef _WIN32
-#include <Lmcons.h>
-#include <Windows.h>
-#else
-#include <signal.h>
-#include <unistd.h>
-#endif
 namespace caprica {
-inline void debugBreak() {
-#ifdef _WIN32
-  if (IsDebuggerPresent())
-    __debugbreak();
-#else
-  if (ptrace(PTRACE_TRACEME, 0, 1, 0) == -1)
-    raise(SIGTRAP);
-#endif
-}
+void debugBreak();
 
-inline std::string getComputerName() {
-#ifdef _WIN32
-  char compNameBuf[MAX_COMPUTERNAME_LENGTH + 1];
-  DWORD compNameBufLength = sizeof(compNameBuf);
-  if (!GetComputerNameA(compNameBuf, &compNameBufLength))
-    throw std::runtime_error("Failed to get the computer name!");
-  return std::string(compNameBuf, compNameBufLength);
-#else
-  char compNameBuf[256];
-  if (gethostname(compNameBuf, sizeof(compNameBuf)) != 0)
-    throw std::runtime_error("Failed to get the computer name!");
-  return std::string(compNameBuf);
-#endif
-}
+std::string getComputerName();
 
-inline std::string getUserName() {
-#ifdef _WIN32
-  char userNameBuf[UNLEN + 1];
-  DWORD userNameBufLength = sizeof(userNameBuf);
-  if (!GetUserNameA(userNameBuf, &userNameBufLength))
-    throw std::runtime_error("Failed to get the user name!");
-  return std::string(userNameBuf, userNameBufLength);
-#else
-  char userNameBuf[256];
-  if (getlogin_r(userNameBuf, sizeof(userNameBuf)) != 0)
-    throw std::runtime_error("Failed to get the user name!");
-  return std::string(userNameBuf);
-#endif
-}
+std::string getUserName();
+
+int openFile(const char *path, int flags, int mode = 0);
+
+size_t readFile(int fd, void *buf, size_t count);
+
+size_t writeFile(int fd, const void *buf, size_t count);
+
+int isEOF(int fd, char *buf, size_t len);
+
+int closeFile(int fd);
+
+int caselessCompare(const char *a, const char *b, size_t len);
+
+int caselessCompare(const char *a, const char *b);
+
+int safeitoa(int value, char *buffer, size_t size, int base);
 }

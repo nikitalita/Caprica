@@ -1,10 +1,8 @@
 #include <papyrus/PapyrusScript.h>
 
-#include <lmcons.h>
-#include <Windows.h>
-
 #include <common/CapricaConfig.h>
 #include <common/EngineLimits.h>
+#include <common/OSUtils.h>
 
 namespace caprica { namespace papyrus {
 
@@ -19,24 +17,10 @@ pex::PexFile* PapyrusScript::buildPex(CapricaReportingContext& repCtx) const {
   pex->compilationTime = time(nullptr);
   pex->sourceFileName = pex->alloc->allocateString(sourceFileName);
 
-  static std::string computerName = []() -> std::string {
-    char compNameBuf[MAX_COMPUTERNAME_LENGTH + 1];
-    DWORD compNameBufLength = sizeof(compNameBuf);
-    if (!GetComputerNameA(compNameBuf, &compNameBufLength))
-      CapricaReportingContext::logicalFatal("Failed to get the computer name!");
-    return std::string(compNameBuf, compNameBufLength);
-  }();
+  static std::string computerName = getComputerName();
   pex->computerName = computerName;
 
-  static std::string userName = []() -> std::string {
-    char userNameBuf[UNLEN + 1];
-    DWORD userNameBufLength = sizeof(userNameBuf);
-    if (!GetUserNameA(userNameBuf, &userNameBufLength))
-      CapricaReportingContext::logicalFatal("Failed to get the user name!");
-    if (userNameBufLength > 0)
-      userNameBufLength--;
-    return std::string(userNameBuf, userNameBufLength);
-  }();
+  static std::string userName = getUserName();
   pex->userName = userName;
 
   for (auto o : objects)

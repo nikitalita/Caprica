@@ -116,12 +116,22 @@ StartOver:
       waiterCount.load(std::memory_order_consume) == workerCount - 1) {
     stopWorkers.store(true, std::memory_order_release);
     workerCount--;
-    queueCondition.notify_all();
+    while (waiterCount.load(std::memory_order_consume) != 0) {
+      queueCondition.notify_one();
+    }
     return;
   }
 
   {
+    // TODO: MSVC implements this wrong, which is why this works.
+    // According to the spec, all the threads waiting on the condition variable have to all have the same lock.
+    // MSVC doesn't require this, but Clang and GCC do.
+    // This may kill performance on those.
+#ifdef _MSVC
     std::unique_lock<std::mutex> lk { notARealMutex };
+#else
+    std::unique_lock<std::mutex> lk{queueAvailabilityMutex};
+#endif
     waiterCount++;
     queueCondition.wait_for(lk, std::chrono::milliseconds(100), waitCallback);
     waiterCount--;
