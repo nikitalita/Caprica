@@ -45,7 +45,7 @@ bool identifier_ref::identifierEquals(const identifier_ref& s) const {
     return false;
   if (identifierHash() != s.identifierHash())
     return false;
-  return CaselessIdentifierEqual::equal<false>(mData, s.mData, mLength);
+  return CaselessIdentifierEqual::equal(mData, s.mData, mLength);
 }
 
 uint32_t identifier_ref::identifierHash() const {

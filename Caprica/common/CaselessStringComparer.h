@@ -17,6 +17,16 @@ namespace caprica {
 void identifierToLower(char* data, size_t size);
 void identifierToLower(std::string& str);
 
+bool caselessEq(const char *a, const char *b);
+
+bool caselessEq(const char *a, const std::string &b);
+
+bool caselessEq(const std::string &a, const char *b);
+
+NEVER_INLINE
+bool caselessEq(const std::string &a, const std::string &b);
+
+NEVER_INLINE
 bool caselessEq(std::string_view a, std::string_view b);
 bool pathEq(std::string_view a, std::string_view b);
 bool pathEq(std::string_view a, const identifier_ref& b);
@@ -89,7 +99,6 @@ extern template uint32_t CaselessIdentifierHasher::hash<false>(const char*, size
 struct CaselessIdentifierEqual final {
   using is_transparent = int;
 
-  template <bool isNullTerminated>
   static bool equal(const char* a, const char* b, size_t len);
 
   bool operator()(const char* lhs, const char* rhs) const = delete;
@@ -97,8 +106,6 @@ struct CaselessIdentifierEqual final {
   bool operator()(std::string_view lhs, std::string_view rhs) const { return idEq(lhs, rhs); }
   bool operator()(const identifier_ref& lhs, const identifier_ref& rhs) const { return idEq(lhs, rhs); }
 };
-extern template bool CaselessIdentifierEqual::equal<true>(const char*, const char*, size_t);
-extern template bool CaselessIdentifierEqual::equal<false>(const char*, const char*, size_t);
 
 // These aren't as restricted as identifiers, but must be in the base-ascii
 // range, and must not contain control characters.

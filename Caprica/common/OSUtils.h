@@ -18,9 +18,5 @@ int isEOF(int fd, char *buf, size_t len);
 
 int closeFile(int fd);
 
-int caselessCompare(const char *a, const char *b, size_t len);
-
-int caselessCompare(const char *a, const char *b);
-
 int safeitoa(int value, char *buffer, size_t size, int base);
 }

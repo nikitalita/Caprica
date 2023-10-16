@@ -101,22 +101,6 @@ int closeFile(int fd) {
 #endif
 }
 
-int caselessCompare(const char *a, const char *b, size_t len) {
-#ifdef _WIN32
-  return _strnicmp(a, b, len);
-#else
-  return strncasecmp(a, b, len);
-#endif
-}
-
-int caselessCompare(const char *a, const char *b) {
-#ifdef _WIN32
-  return _stricmp(a, b);
-#else
-  return strcasecmp(a, b);
-#endif
-}
-
 int safeitoa(int value, char *buffer, size_t size, int base) {
 #ifdef _WIN32
   return _itoa_s(value, buffer, size, base);

@@ -11,6 +11,23 @@ alignas(128) const uint64_t charToLowerMap[] = { ' ', '!', '"', '#', '$',  '%', 
                                                  'f', 'g', 'h', 'i', 'j',  'k', 'l', 'm',  'n', 'o', 'p', 'q', 'r', 's',
                                                  't', 'u', 'v', 'w', 'x',  'y', 'z', '{',  '|', '}', '~' };
 
+
+ALWAYS_INLINE int caselessCompare(const char *a, const char *b, size_t len) {
+#ifdef _WIN32
+  return _strnicmp(a, b, len);
+#else
+  return strncasecmp(a, b, len);
+#endif
+}
+
+ALWAYS_INLINE int caselessCompare(const char *a, const char *b) {
+#ifdef _WIN32
+  return _stricmp(a, b);
+#else
+  return strcasecmp(a, b);
+#endif
+}
+
 void identifierToLower(char* data, size_t size) {
   for (size_t i = 0; i < size; i++)
     *data = (char)(charToLowerMap - 0x20)[*data];
@@ -20,120 +37,102 @@ void identifierToLower(std::string& str) {
   identifierToLower(str.data(), str.size());
 }
 
-bool caselessEq(std::string_view a, std::string_view b) {
-  if (a.size() != b.size())
-    return false;
-  const char* __restrict strA = a.data();
-  const int64_t strBOff = b.data() - strA;
-  size_t lenLeft = a.size();
-  while (lenLeft) {
-    if ((charToLowerMap - 0x20)[*strA] != (charToLowerMap - 0x20)[*(strA + strBOff)])
-      return false;
-    strA++;
-    lenLeft--;
-  }
-
-  return true;
-}
-
 bool pathEq(std::string_view a, std::string_view b) {
-  // TODO: Ensure in lower-ascii range.
-  return caselessEq(a, b);
+  if (a.size() != b.size()) {
+    return false;
+  }
+  return caselessCompare(a.data(), b.data(), a.size()) == 0;
 }
 
 bool pathEq(std::string_view a, const char* b) {
-  // TODO: Ensure in lower-ascii range.
-  return caselessEq(a, std::string_view(b));
+  if (a.size() != strlen(b)) {
+    return false;
+  }
+  return caselessCompare(a.data(), b, a.size()) == 0;
+}
+
+bool pathEq(const char *a, const char *b) {
+  if (strlen(a) != strlen(b)) {
+    return false;
+  }
+  return caselessCompare(a, b, strlen(a)) == 0;
 }
 
 bool pathEq(std::string_view a, const identifier_ref& b) {
-  // TODO: Ensure in lower-ascii range.
-  return caselessEq(a, std::string_view(b.data(), b.size()));
+  if (a.size() != b.size()) {
+    return false;
+  }
+  return caselessCompare(a.data(), b.data(), a.size()) == 0;
 }
 
 bool pathEq(const identifier_ref& a, const identifier_ref& b) {
-  // TODO: Ensure in lower-ascii range.
-  return caselessEq(std::string_view(a.data(), a.size()), std::string_view(b.data(), b.size()));
+  if (a.size() != b.size()) {
+    return false;
+  }
+  return caselessCompare(a.data(), b.data(), a.size()) == 0;
 }
 
-alignas(128) static constexpr char _spaces[]{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                                           ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-alignas(128) static const __m128i spaces = reinterpret_cast<const __m128i &>(_spaces);
-
-template <bool isNullTerminated>
 ALWAYS_INLINE bool CaselessIdentifierEqual::equal(const char* a, const char* b, size_t len) {
-  // This uses the SSE2 instructions movdqa, movdqu, pcmpeqb, por, pmovmskb,
-  // and is safe to use on any 64-bit CPU.
-  // This returns via goto's because of how MSVC does codegen.
-  if (a == b)
-    return true;
   const char* __restrict strA = a;
-  const int64_t strBOff = b - a;
-  size_t lenLeft = len;
-  if (isNullTerminated) {
-    // We know the string is null-terminated, so we can align to 2.
-    lenLeft = ((len + 1) & 0xFFFFFFFFFFFFFFFEULL);
-  }
-  while (lenLeft >= 16) {
-    auto vA = _mm_or_si128(_mm_loadu_si128((__m128i*)strA), spaces);
-    auto vB = _mm_or_si128(_mm_loadu_si128((__m128i*)(strA + strBOff)), spaces);
-    if (_mm_movemask_epi8(_mm_cmpeq_epi8(vA, vB)) != 0xFFFF)
+  const int64_t strBOff = b - strA;
+  while (len) {
+    if ((charToLowerMap - 0x20)[*strA] != (charToLowerMap - 0x20)[*(strA + strBOff)])
       return false;
-    strA += 16;
-    lenLeft -= 16;
-  }
-  // We don't need to adjust the lenLeft for each of these.
-  if (lenLeft & 8) {
-    if ((*(uint64_t*)strA | 0x2020202020202020ULL) != (*(uint64_t*)(strA + strBOff) | 0x2020202020202020ULL))
-      return false;
-    strA += 8;
-  }
-  if (lenLeft & 4) {
-    if ((*(uint32_t*)strA | 0x20202020U) != (*(uint32_t*)(strA + strBOff) | 0x20202020U))
-      return false;
-    strA += 4;
-  }
-  if (lenLeft & 2) {
-    if ((*(uint16_t*)strA | 0x2020) != (*(uint16_t*)(strA + strBOff) | 0x2020))
-      return false;
-    if (!isNullTerminated)
-      strA += 2;
-  }
-  if (!isNullTerminated) {
-    if (lenLeft & 1) {
-      if ((*(uint8_t*)strA | 0x20) != (*(uint8_t*)(strA + strBOff) | 0x20))
-        return false;
-    }
+    strA++;
+    len--;
   }
   return true;
-}
-template bool CaselessIdentifierEqual::equal<true>(const char*, const char*, size_t);
-template bool CaselessIdentifierEqual::equal<false>(const char*, const char*, size_t);
 
-template <bool isNullTerminated>
+}
+
 static bool idEq(const char* a, size_t sA, const char* b, size_t sB) {
   if (sA != sB)
     return false;
-  return CaselessIdentifierEqual::equal<isNullTerminated>(a, b, sB);
+  return CaselessIdentifierEqual::equal(a, b, sB);
 }
 
 bool idEq(const char* a, const char* b) {
-  return idEq<true>(a, strlen(a), b, strlen(b));
+  return idEq(a, strlen(a), b, strlen(b));
 }
 bool idEq(const char* a, const std::string& b) {
-  return idEq<true>(a, strlen(a), b.c_str(), b.size());
+  return idEq(a, strlen(a), b.c_str(), b.size());
 }
 bool idEq(const std::string& a, const char* b) {
-  return idEq<true>(a.c_str(), a.size(), b, strlen(b));
+  return idEq(a.c_str(), a.size(), b, strlen(b));
 }
 NEVER_INLINE
 bool idEq(const std::string& a, const std::string& b) {
-  return idEq<true>(a.c_str(), a.size(), b.c_str(), b.size());
+  return idEq(a.c_str(), a.size(), b.c_str(), b.size());
 }
 NEVER_INLINE
 bool idEq(std::string_view a, std::string_view b) {
-  return idEq<false>(a.data(), a.size(), b.data(), b.size());
+  return idEq(a.data(), a.size(), b.data(), b.size());
 }
+
+bool caselessEq(const char *a, const char *b) {
+  return idEq(a, strlen(a), b, strlen(b));
+}
+
+bool caselessEq(const char *a, const std::string &b) {
+  return idEq(a, strlen(a), b.c_str(), b.size());
+}
+
+bool caselessEq(const std::string &a, const char *b) {
+  return idEq(a.c_str(), a.size(), b, strlen(b));
+}
+
+NEVER_INLINE
+bool caselessEq(const std::string &a, const std::string &b) {
+  return idEq(a.c_str(), a.size(), b.c_str(), b.size());
+}
+
+NEVER_INLINE
+bool caselessEq(std::string_view a, std::string_view b) {
+  return idEq(a.data(), a.size(), b.data(), b.size());
+}
+
+
+
 
 NEVER_INLINE
 size_t CaselessStringHasher::doCaselessHash(const char* k, size_t len) {

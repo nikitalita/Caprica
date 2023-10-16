@@ -315,7 +315,7 @@ bool parseCommandLineArguments(int argc, char* argv[], caprica::CapricaJobManage
     po::variables_map vm;
     // scan argv for `-pcompiler`
     for (int i = 1; i < argc; i++) {
-      if (caselessCompare(argv[i], "--pcompiler") == 0 || caselessCompare(argv[i], "-pcompiler") == 0) {
+      if (caselessEq(argv[i], "--pcompiler") || caselessEq(argv[i], "-pcompiler")) {
         default_style = pcompiler_style;
         break;
       }
