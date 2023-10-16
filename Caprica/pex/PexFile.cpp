@@ -26,7 +26,7 @@ PexDebugFunctionInfo* PexFile::tryFindFunctionDebugInfo(const PexObject* object,
   if (debugInfo) {
     assert(function);
     assert(object);
-    auto fName = propertyName == "" ? getStringValue(function->name) : propertyName;
+    auto fName = propertyName.empty() ? getStringValue(function->name) : propertyName;
     auto objectName = getStringValue(object->name);
     auto stateName = state ? getStringValue(state->name) : "";
 

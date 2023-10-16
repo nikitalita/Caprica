@@ -484,7 +484,7 @@ struct PapyrusNamespace final {
   }
 
   bool tryFindNamespace(const identifier_ref& curPiece, PapyrusNamespace const** ret) const {
-    if (curPiece == "") {
+    if (curPiece.empty()) {
       *ret = this;
       return true;
     }

@@ -163,7 +163,7 @@ bool addFilesFromDirectory(const IInputFile& input,
   dirs.push_back(subdir);
   auto baseDirMap = getBaseSigMap(conf::Papyrus::game);
   auto l_startNS = startingNS;
-  if (l_startNS == "") {
+  if (l_startNS.empty()) {
     if (conf::Papyrus::game > GameID::Skyrim) {
       if (input.requiresRemap())
         l_startNS = "!!temp" + abspath.filename().string() + std::to_string(rand());

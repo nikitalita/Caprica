@@ -30,7 +30,7 @@ struct PapyrusState final {
     state->name = file->getString(name);
 
     // Every skyrim script has these exact same functions
-    if (file->gameID == GameID::Skyrim && name == "") {
+    if (file->gameID == GameID::Skyrim && name.empty()) {
       state->functions.push_back(makeGetState(repCtx, file, obj));
       state->functions.push_back(makeGotoState(repCtx, file, obj));
     }
@@ -42,7 +42,7 @@ struct PapyrusState final {
       state->functions.push_back(f.second->buildPex(repCtx, file, obj, state, pex::PexString()));
     }
 
-    if (name == "") {
+    if (name.empty()) {
       EngineLimits::checkLimit(repCtx,
                                location,
                                EngineLimits::Type::PexObject_EmptyStateFunctionCount,
