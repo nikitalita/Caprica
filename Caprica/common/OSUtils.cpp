@@ -1,6 +1,8 @@
 #include "OSUtils.h"
-
+#include <stdexcept>
 #ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
 #include <Lmcons.h>
 #include <Windows.h>
 #else

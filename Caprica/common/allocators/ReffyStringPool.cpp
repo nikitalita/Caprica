@@ -1,5 +1,5 @@
 #include <common/allocators/ReffyStringPool.h>
-#include <common/sse2neon.h>
+#include <common/AsmUtils.h>
 
 #include <assert.h>
 

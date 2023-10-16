@@ -31,8 +31,6 @@ struct PapyrusFunctionCallExpression final : public PapyrusExpression {
     template <typename T>
     template <typename T2>
     friend struct IntrusiveLinkedList<T>::LockstepIterator;
-    template <typename T>
-    friend struct IntrusiveLinkedList<T>::ConstIterator;
 
     Parameter* next { nullptr };
   };

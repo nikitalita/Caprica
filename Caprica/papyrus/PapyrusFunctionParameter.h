@@ -42,6 +42,16 @@ struct PapyrusFunctionParameter final {
     defaultValue = ctx->coerceDefaultValue(defaultValue, type);
   }
 private:
+// TODO: This is a hack to get around the fact that clang/gcc and MSVC have very different rules about friend
+// declarations.
+#ifdef _MSC_VER
+  friend IntrusiveLinkedList<PapyrusFunctionParameter>;
+  template <typename T>
+  friend struct IntrusiveLinkedList;
+  template <typename T>
+  template <typename T2>
+  friend struct IntrusiveLinkedList<T>::LockstepIterator;
+#else
   template <typename> friend struct IntrusiveLinkedList;
   template <>
   friend struct IntrusiveLinkedList<PapyrusFunctionParameter>::LockstepIterator;
@@ -52,7 +62,7 @@ private:
 #pragma clang diagnostic ignored "-Wunsupported-friend"
 #endif
   template <typename T, typename T2> friend struct IntrusiveLinkedList<T>::LockstepIteratorWrapper;
-
+#endif
   PapyrusFunctionParameter* next { nullptr };
 };
 

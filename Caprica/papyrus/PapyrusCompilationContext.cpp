@@ -543,14 +543,7 @@ struct PapyrusNamespace final {
 static PapyrusNamespace rootNamespace {};
 void PapyrusCompilationContext::pushNamespaceFullContents(
     const std::string& namespaceName, caseless_unordered_identifier_ref_map<PapyrusCompilationNode*>&& map) {
-  std::string scriptObjectns = namespaceName + ":ScriptObject";
-  identifier_ref scriptObject = "ScriptObject";
-  auto thing = map.find(scriptObject);
   rootNamespace.createNamespace(namespaceName, std::move(map));
-  identifier_ref dsgas;
-  PapyrusCompilationNode *node;
-  auto thing2 = rootNamespace.tryFindType(scriptObjectns, &node, &dsgas);
-  std::cout << "Did we find this?" << (thing2 ? "yes" : "no") << "\n";
 }
 
 void PapyrusCompilationContext::awaitRead() {
