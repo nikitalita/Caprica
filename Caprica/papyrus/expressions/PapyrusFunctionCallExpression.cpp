@@ -105,6 +105,7 @@ pex::PexValue PapyrusFunctionCallExpression::generateLoad(pex::PexFile* file,
         return dest;
       }
       case PapyrusBuiltinArrayFunctionKind::Unknown:
+      default:
         break;
     }
     CapricaReportingContext::logicalFatal("Unknown PapyrusBuiltinArrayFunctionKind!");
@@ -373,6 +374,7 @@ void PapyrusFunctionCallExpression::semantic(PapyrusResolutionContext* ctx, Papy
         return;
       }
       case PapyrusBuiltinArrayFunctionKind::Unknown:
+      default:
         break;
     }
     ctx->reportingContext.logicalFatal("Unknown PapyrusBuiltinArrayFunctionKind!");

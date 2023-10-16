@@ -7,6 +7,8 @@
 #include <mutex>
 #include <thread>
 
+#include <common/UtilMacros.h>
+
 namespace caprica {
 
 struct CapricaJob abstract {

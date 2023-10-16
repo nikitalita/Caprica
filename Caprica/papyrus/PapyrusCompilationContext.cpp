@@ -48,6 +48,8 @@ void PapyrusCompilationNode::queueCompile() {
     case NodeType::PasReflection:
     case NodeType::PexReflection:
       return;
+    default:
+      break;
   }
   jobManager->queueJob(&writeJob);
 }
@@ -59,6 +61,8 @@ void PapyrusCompilationNode::awaitWrite() {
     case NodeType::PasReflection:
     case NodeType::PexReflection:
       return;
+    default:
+      break;
   }
   writeJob.await();
 }

@@ -46,6 +46,7 @@ static size_t getArgCountForOpCode(PexOpCode op) {
     case PexOpCode::LockGuards:
     case PexOpCode::UnlockGuards:
     case PexOpCode::TryLockGuards:
+    default:
       break;
   }
   CapricaReportingContext::logicalFatal("Unknown PexOpCode!");
@@ -90,6 +91,7 @@ int32_t PexInstruction::getDestArgIndexForOpCode(PexOpCode op) {
 #undef OP_ARG5
 #undef OP_ARG6
     case PexOpCode::Invalid:
+    default:
       break;
   }
   CapricaReportingContext::logicalFatal("Unknown PexOpCode!");
@@ -128,6 +130,8 @@ PexInstruction* PexInstruction::read(allocators::ChainedPool* alloc, PexReader& 
         CapricaReportingContext::logicalFatal("Unknown PexOpCode: {}", (unsigned)inst->opCode);
       break;
     }
+    default:
+      CapricaReportingContext::logicalFatal("Unknown game type!");
   }
 
   switch (inst->opCode) {
