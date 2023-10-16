@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include <common/identifier_ref.h>
+#include <common/UtilMacros.h>
 
 namespace caprica { namespace allocators {
 
@@ -17,14 +18,14 @@ struct ChainedPool {
 
   char* allocate(size_t size);
   template <typename T, typename... Args>
-  __declspec(allocator) T* make(Args&&... args) {
+  DECLSPEC_ALLOCATOR T *make(Args &&... args) {
     if (std::is_trivially_destructible<T>::value) {
       auto t = allocate(sizeof(T));
-      __assume(t != nullptr);
+      ASSUME_IMPL(t != nullptr);
       return new (t) T(std::forward<Args>(args)...);
     }
     auto buf = allocate(sizeof(DestructionNode) + sizeof(T));
-    __assume(buf != nullptr);
+    ASSUME_IMPL(buf != nullptr);
     auto node = (DestructionNode*)buf;
     node->destructor = [](void* val) {
       ((T*)val)->~T();
