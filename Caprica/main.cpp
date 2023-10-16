@@ -169,8 +169,8 @@ bool addFilesFromDirectory(const IInputFile& input,
         l_startNS = "!!temp" + abspath.filename().string() + std::to_string(rand());
     }
   }
-  const auto DOTDOT = std::string_view("..");
-  const auto DOT = std::string_view(".");
+  static const auto DOTDOT = std::string_view("..");
+  static const auto DOT = std::string_view(".");
 
   while (dirs.size()) {
     auto curDir = dirs.back();
