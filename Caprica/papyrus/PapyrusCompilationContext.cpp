@@ -131,7 +131,7 @@ std::string_view findScriptName(const std::string_view& data, const std::string_
       next = data.size() - 1;
     auto line = data.substr(last, next - last);
     auto begin = line.find_first_not_of(" \t");
-    if (caselessCompare(line.substr(begin, startstring.size()).data(), startstring.data(), startstring.size()) == 0) {
+    if (idEq(line.substr(begin, startstring.size()), startstring) == 0) {
       auto first = line.find_first_not_of(" \t", startstring.size() + begin);
       return line.substr(first, line.find_first_of(" \t", first) - first);
     }
@@ -174,7 +174,8 @@ void PapyrusCompilationNode::FileParseJob::run() {
     case NodeType::PasCompile: {
       // check the object name with the reportedname
       auto nsName = FSUtils::pathToObjectName(parent->reportedName);
-      if (caselessCompare(parent->objectName.c_str(), nsName.c_str(), parent->objectName.size()) != 0) {
+
+      if (idEq(parent->objectName, nsName) != 0) {
         if (parent->strictNS) {
           CapricaReportingContext::logicalFatal(
               "{}: The script namespace '{}' does not match the expected namespace '{}'.\n"

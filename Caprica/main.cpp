@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 
+#include <common/OSUtils.h>
 #include <common/CapricaConfig.h>
 #include <common/CapricaJobManager.h>
 #include <common/CapricaReportingContext.h>
@@ -406,7 +407,82 @@ void parseUserFlags(std::string &&flagsPath) {
 
 }
 
+#define TEST_MAX_ITERS 1000000
+
+static std::vector<std::string> string_a_vec{TEST_MAX_ITERS};
+static std::vector<std::string> string_b_vec{TEST_MAX_ITERS};
+
+void init_test() {
+  for (int i = 0; i < TEST_MAX_ITERS; i++) {
+    // randomly generate strings
+    std::string string_a;
+    std::string string_b;
+    int len = rand() % 20;
+    for (int j = 0; j < len; j++) {
+      string_a += (char) (rand() % 26 + 97);
+      string_b += (char) (rand() % 26 + 97);
+    }
+    string_a_vec[i] = string_a;
+    string_b_vec[i] = string_b;
+  }
+}
+
+size_t test_caselessCompare(size_t totalIters) {
+
+  std::cout << "testing caselessCompare (iter " << totalIters << ")..." << std::endl;
+  auto startTime2 = std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < TEST_MAX_ITERS; i++) {
+    caprica::caselessCompare(string_a_vec[i].c_str(), string_b_vec[i].c_str());
+  }
+  auto endTime2 = std::chrono::high_resolution_clock::now();
+  auto total = std::chrono::duration_cast<std::chrono::milliseconds>(endTime2 - startTime2).count();
+  std::cout << "caselessCompare: (iter " << totalIters << ") "
+            << total << "ms"
+            << std::endl;
+  return total;
+}
+
+size_t test_idEq(size_t totalIters) {
+  std::cout << "testing idEq (iter " << totalIters << ")..." << std::endl;
+  auto startTime3 = std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < TEST_MAX_ITERS; i++) {
+    caprica::idEq(string_a_vec[i].c_str(), string_b_vec[i].c_str());
+  }
+  auto endTime3 = std::chrono::high_resolution_clock::now();
+  auto total = std::chrono::duration_cast<std::chrono::milliseconds>(endTime3 - startTime3).count();
+  std::cout << "idEq: (iter " << totalIters << ") "
+            << total << "ms"
+            << std::endl;
+  return total;
+}
+
+
+void test_function() {
+  std::cout << "initializing test strings..." << std::endl;
+  init_test();
+
+  // test caselessCompare and idEq for 100 times, take the average
+
+  size_t totalCaselessCompare = 0;
+  size_t totalIdEq = 0;
+  for (int i = 0; i < 100; i++) {
+    totalCaselessCompare += test_caselessCompare(i);
+    totalIdEq += test_idEq(i);
+  }
+  std::cout << "average caselessCompare: "
+            << totalCaselessCompare / 100 << "ms"
+            << std::endl;
+  std::cout << "average idEq: "
+            << totalIdEq / 100 << "ms"
+            << std::endl;
+
+
+}
+
+
 int main(int argc, char *argv[]) {
+  test_function();
+  return 0;
   caprica::CapricaJobManager jobManager{};
   auto startParse = std::chrono::high_resolution_clock::now();
   if (!caprica::parseCommandLineArguments(argc, argv, &jobManager)) {
