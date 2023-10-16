@@ -43,15 +43,6 @@ static const std::unordered_set FAKE_SKYRIM_SCRIPTS_SET = {
 
 bool handleImports(const std::vector<ImportDir>& f, caprica::CapricaJobManager* jobManager);
 
-#ifdef _WIN32
-PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType,
-                                CapricaJobManager* jobManager,
-                                const std::filesystem::path& baseOutputDir,
-                                const std::filesystem::path& curDir,
-                                const std::filesystem::path& absBaseDir,
-                                const WIN32_FIND_DATA& data,
-                                bool strictNS);
-#endif
 PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType,
                                 CapricaJobManager* jobManager,
                                 const std::filesystem::path& baseOutputDir,
@@ -145,8 +136,28 @@ bool addFilesFromDirectory(const IInputFile& input,
         } else {
           auto ext = FSUtils::extensionAsRef(filenameRef);
           if (!shouldSkip(ext, nodeType)) {
-            PapyrusCompilationNode* node =
-                getNode(nodeType, jobManager, baseOutputDir, curDir, absBaseDir, data, !input.requiresRemap());
+            const auto lastModTime = [](FILETIME ft) -> time_t {
+              ULARGE_INTEGER ull;
+              ull.LowPart = ft.dwLowDateTime;
+              ull.HighPart = ft.dwHighDateTime;
+              return ull.QuadPart / 10000000ULL - 11644473600ULL;
+            }(data.ftLastWriteTime);
+            const auto fileSize = [](DWORD low, DWORD high) {
+              ULARGE_INTEGER ull;
+              ull.LowPart = low;
+              ull.HighPart = high;
+              return ull.QuadPart;
+            }(data.nFileSizeLow, data.nFileSizeHigh);
+
+            PapyrusCompilationNode* node = getNode(nodeType,
+                                                   jobManager,
+                                                   baseOutputDir,
+                                                   curDir,
+                                                   absBaseDir,
+                                                   data.cFileName,
+                                                   lastModTime,
+                                                   fileSize,
+                                                   !input.requiresRemap());
             namespaceMap.emplace(caprica::identifier_ref(node->baseName), node);
           }
         }
@@ -172,16 +183,16 @@ bool addFilesFromDirectory(const IInputFile& input,
         } else {
           auto ext = FSUtils::extensionAsRef(filenameRef);
           if (!shouldSkip(ext, nodeType)) {
-            PapyrusCompilationNode* node = getNode(nodeType,
-                                                   jobManager,
-                                                   baseOutputDir,
-                                                   curDir,
-                                                   absBaseDir,
-                                                   entry.path(),
-                                                   duration_cast<std::chrono::seconds>(
-                                                           entry.last_write_time().time_since_epoch()).count(),
-                                                   entry.file_size(),
-                                                   !input.requiresRemap());
+            PapyrusCompilationNode *node =
+                    getNode(nodeType,
+                            jobManager,
+                            baseOutputDir,
+                            curDir,
+                            absBaseDir,
+                            entry.path(),
+                            duration_cast<std::chrono::seconds>(entry.last_write_time().time_since_epoch()).count(),
+                            entry.file_size(),
+                            !input.requiresRemap());
             namespaceMap.emplace(caprica::identifier_ref(node->baseName), node);
           }
         }
@@ -237,37 +248,6 @@ PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType
   return node;
 }
 
-#ifdef _WIN32
-PapyrusCompilationNode* getNode(const PapyrusCompilationNode::NodeType& nodeType,
-                                CapricaJobManager* jobManager,
-                                const std::filesystem::path& baseOutputDir,
-                                const std::filesystem::path& curDir,
-                                const std::filesystem::path& absBaseDir,
-                                const WIN32_FIND_DATA& data,
-                                bool strictNS) {
-  const auto lastModTime = [](FILETIME ft) -> time_t {
-    ULARGE_INTEGER ull;
-    ull.LowPart = ft.dwLowDateTime;
-    ull.HighPart = ft.dwHighDateTime;
-    return ull.QuadPart / 10000000ULL - 11644473600ULL;
-  }(data.ftLastWriteTime);
-  const auto fileSize = [](DWORD low, DWORD high) {
-    ULARGE_INTEGER ull;
-    ull.LowPart = low;
-    ull.HighPart = high;
-    return ull.QuadPart;
-  }(data.nFileSizeLow, data.nFileSizeHigh);
-  return getNode(nodeType,
-                 jobManager,
-                 baseOutputDir,
-                 curDir,
-                 absBaseDir,
-                 data.cFileName,
-                 lastModTime,
-                 fileSize,
-                 strictNS);
-}
-#endif
 
 bool handleImports(const std::vector<ImportDir>& f, caprica::CapricaJobManager* jobManager) {
   // Skyrim hacks; we need to import Skyrim's fake scripts into the global namespace first.
